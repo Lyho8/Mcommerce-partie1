@@ -61,8 +61,9 @@ public class ProductController {
 	public Product afficherUnProduit(@PathVariable int id) {
 		Product produit = productDao.findById(id);
 
-		if (produit == null)
+		if (produit == null) {
 			throw new ProduitIntrouvableException("Le produit avec l'id " + id + " est introuvable.");
+		}
 
 		return produit;
 	}
@@ -71,11 +72,12 @@ public class ProductController {
 	@PostMapping(value = "/Produits")
 	public ResponseEntity<Void> ajouterProduit(@Valid @RequestBody Product product) {
 		// On contrôle le prix avant de tenter de sauvegarder
-		// Si le prix est négatif, c'est le contrôle sur le champ "prix" qui lèvera une exception
-		if(product.getPrix() == 0) {
+		// Si le prix est négatif, c'est le contrôle sur le champ "prix" qui lèvera une
+		// exception
+		if (product.getPrix() == 0) {
 			throw new ProduitGratuitException("Le prix de vente doit strictement être supérieur à 0 !");
 		}
-		
+
 		Product productAdded = productDao.save(product);
 
 		if (productAdded == null) {
