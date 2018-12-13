@@ -119,5 +119,11 @@ public class ProductController {
 		
 		return result;
 	}
+	
+	// Méthode alternative à "/Produits" qui renvoie les produits triés par ordre alphabétique
+	@GetMapping(value = "/ProduitsAlpha")
+	public List<Product> trierProduitsParOrdreAlphabetique(){
+		return productDao.findAllByOrderByNomAsc();
+	}
 
 }
