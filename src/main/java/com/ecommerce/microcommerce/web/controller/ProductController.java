@@ -21,6 +21,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.ecommerce.microcommerce.dao.ProductDao;
 import com.ecommerce.microcommerce.model.Product;
+import com.ecommerce.microcommerce.web.exceptions.ProduitGratuitException;
 import com.ecommerce.microcommerce.web.exceptions.ProduitIntrouvableException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -62,19 +63,25 @@ public class ProductController {
 		Product produit = productDao.findById(id);
 
 		if (produit == null)
-			throw new ProduitIntrouvableException(
-					"Le produit avec l'id " + id + " est INTROUVABLE. Écran Bleu si je pouvais.");
+			throw new ProduitIntrouvableException("Le produit avec l'id " + id + " est introuvable.");
 
 		return produit;
 	}
 
-	// ajouter un produit
+	// Ajouter un produit
 	@PostMapping(value = "/Produits")
 	public ResponseEntity<Void> ajouterProduit(@Valid @RequestBody Product product) {
+		// On contrôle le prix avant de tenter de sauvegarder
+		// Si le prix est négatif, c'est le contrôle sur le champ "prix" qui lèvera une exception
+		if(product.getPrix() == 0) {
+			throw new ProduitGratuitException("Le prix de vente doit strictement être supérieur à 0 !");
+		}
+		
 		Product productAdded = productDao.save(product);
 
-		if (productAdded == null)
+		if (productAdded == null) {
 			return ResponseEntity.noContent().build();
+		}
 
 		URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
 				.buildAndExpand(productAdded.getId()).toUri();
@@ -94,35 +101,37 @@ public class ProductController {
 
 	// Pour les tests
 	@GetMapping(value = "test/produits/{prix}")
-	public List<Product> testeDeRequetes(@PathVariable int prix) {
+	public List<Product> testDeRequetes(@PathVariable int prix) {
 		return productDao.chercherUnProduitCher(400);
 	}
-	
+
 	// Retourne la marge de l'ensemble des produits enregistrés
 	@GetMapping(value = "/AdminProduits", produces = "application/json")
-	public ArrayNode calculerMargeProduit(){
+	public ArrayNode calculerMargeProduit() {
 		ObjectMapper mapper = new ObjectMapper();
-		
+
 		ArrayNode result = mapper.createArrayNode();
-		
+
 		List<Product> products = productDao.findAll();
-		
+
 		ObjectNode on = null;
-		for(Product p : products) {
+		for (Product p : products) {
 			on = mapper.createObjectNode();
-			// Le prix d'achat étant un int primitif, il est forcément au moins initialisé à 0 par défaut.
+			// Le prix d'achat étant un int primitif, il est forcément au moins initialisé à
+			// 0 par défaut.
 			// Pas besoin de contrôle.
 			on.put(p.toString(), p.getPrix() - p.getPrixAchat());
-			
+
 			result.add(on);
 		}
-		
+
 		return result;
 	}
-	
-	// Méthode alternative à "/Produits" qui renvoie les produits triés par ordre alphabétique
+
+	// Méthode alternative à "/Produits" qui renvoie les produits triés par ordre
+	// alphabétique
 	@GetMapping(value = "/ProduitsAlpha")
-	public List<Product> trierProduitsParOrdreAlphabetique(){
+	public List<Product> trierProduitsParOrdreAlphabetique() {
 		return productDao.findAllByOrderByNomAsc();
 	}
 
