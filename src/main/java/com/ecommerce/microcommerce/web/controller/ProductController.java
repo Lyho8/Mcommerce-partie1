@@ -24,7 +24,6 @@ import com.ecommerce.microcommerce.model.Product;
 import com.ecommerce.microcommerce.web.exceptions.ProduitGratuitException;
 import com.ecommerce.microcommerce.web.exceptions.ProduitIntrouvableException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.ser.FilterProvider;
 import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
@@ -107,22 +106,16 @@ public class ProductController {
 
 	// Retourne la marge de l'ensemble des produits enregistrés
 	@GetMapping(value = "/AdminProduits", produces = "application/json")
-	public ArrayNode calculerMargeProduit() {
+	public ObjectNode calculerMargeProduit() {
 		ObjectMapper mapper = new ObjectMapper();
-
-		ArrayNode result = mapper.createArrayNode();
 
 		List<Product> products = productDao.findAll();
 
-		ObjectNode on = null;
+		ObjectNode result = mapper.createObjectNode();
 		for (Product p : products) {
-			on = mapper.createObjectNode();
 			// Le prix d'achat étant un int primitif, il est forcément au moins initialisé à
-			// 0 par défaut.
-			// Pas besoin de contrôle.
-			on.put(p.toString(), p.getPrix() - p.getPrixAchat());
-
-			result.add(on);
+			// 0 par défaut : pas besoin de contrôle.
+			result.put(p.toString(), p.getPrix() - p.getPrixAchat());
 		}
 
 		return result;
